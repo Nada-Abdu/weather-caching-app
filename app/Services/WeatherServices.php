@@ -45,52 +45,71 @@ class WeatherServices implements WeatherInterface
     public function getCitiesWeather($cities)
     {
         try {
-        $citiestWeatherForRequest = [];
-        $cachedCitiestWeather = [];
+            $citiestWeatherForRequest = [];
+            $cachedCitiestWeather = [];
 
-        // convert all city to lower case
-        $cities = array_map('strtolower', $cities);
-        // Get all requested cities from the cache, if the city is in the cashe it will return weather as a value else return null
-        $requestedCitiestWeather = Cache::many($cities);
+            // convert all city to lower case
+            $cities = array_map('strtolower', $cities);
+            // Get all requested cities from the cache, if the city is in the cache it will return weather as a value else return null
+            $requestedCitiestWeather = Cache::many($cities);
 
-        // for loop through all requested cities to separate the cashed cities (to return them) from non-cashed cities (to request them)
-        foreach ($requestedCitiestWeather as $city => $weather) {
-            if ($weather) {
-                array_push($cachedCitiestWeather, $weather);
-            } else {
-                // 'q' is requested format from weather API
-                array_push($citiestWeatherForRequest, ['q' => $city]);
+            // for loop through all requested cities to separate the cached cities (to return them) from non-cached cities (to request them)
+            foreach ($requestedCitiestWeather as $city => $weather) {
+                if ($weather) {
+                    array_push($cachedCitiestWeather, $weather);
+                } else {
+                    // 'q' is requested format from weather API
+                    array_push($citiestWeatherForRequest, ['q' => $city]);
+                }
             }
+
+            // 'locations' is requested format from weather API
+            $citiestWeatherForRequest = [
+                "locations" => $citiestWeatherForRequest
+            ];
+
+            $key = config('services.weatherAPI.key');
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json'
+            ])->post('http://api.weatherapi.com/v1/current.json?key=' . $key . '&q=bulk', $citiestWeatherForRequest);
+
+
+            // error handling
+            if (!$response->successful()) {
+                $APICodeError = $response->json()['error']['code'];
+                $error = $this->handleAPIError($APICodeError);
+                throw $error;
+            }
+
+            // arranged and cache of cities weather
+            $citiestWeather = $this->arrangedandCacheBulkData($response->json());
+            return array_merge($cachedCitiestWeather, $citiestWeather);
+        } catch (Exception $exception) {
+            throw $exception;
         }
-
-        // 'locations' is requested format from weather API
-        $citiestWeatherForRequest = [
-            "locations" => $citiestWeatherForRequest
-        ];
-
-        $key = config('services.weatherAPI.key');
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json'
-        ])->post('http://api.weatherapi.com/v1/current.json?key=' . $key . '&q=bulk', $citiestWeatherForRequest);
-
-
-        // error handling
-        if (!$response->successful()) {
-            $APICodeError = $response->json()['error']['code'];
-            $error = $this->handleAPIError($APICodeError);
-            throw $error;
-        }
-
-        // arranged and cashe of cities weather
-        $citiestWeather = $this->arrangedandCasheBulkData($response->json());
-        return array_merge($cachedCitiestWeather, $citiestWeather);
-    } catch (Exception $exception) {
-        throw $exception;
-    }
     }
 
     public function getStatisticsWeather()
     {
+        try {
+            // chech for statistics weather
+            $statisticsWeather = Cache::get('statistics_weather');
+            if ($statisticsWeather) {
+                return $statisticsWeather;
+            } else {
+                $cities = ['makkah-sa', 'madina-sa', 'riyadh-sa', 'jeddah-sa', 'taif-sa',  'dammam-sa', 'abha-sa', 'jazan-sa'];
+
+                // reuse getCitiesWeather function to get cached cities' weather and get others cities from API and cached it and returns all cities as an array of objects
+                $citiesWeather = $this->getCitiesWeather($cities);
+                $timeToLiveIn30Min = $this->getTimeToLiveIn30Min();
+
+                $statisticsWeatherArray = $this->arrangedAndCachedStatisticsWeatherData($citiesWeather, count($cities));
+                Cache::put('statistics_weather', $statisticsWeatherArray, $timeToLiveIn30Min);
+                return $statisticsWeatherArray;
+            }
+        } catch (Exception $exception) {
+            throw $exception;
+        }
     }
 
 
@@ -150,38 +169,146 @@ class WeatherServices implements WeatherInterface
         return new Exception($errorMessage, $code);
     }
 
-    private function arrangedandCasheBulkData($citiestWeather)
+    private function arrangedandCacheBulkData($citiesWeather)
     {
         try {
-        $citiestWeather = $citiestWeather['bulk'];
-        $arrangedWeatherData = collect($citiestWeather)->map(function ($citytWeather) {
-            //if user sends wrong city name in the cities array, weather API does not return an error
+            $citiesWeather = $citiesWeather['bulk'];
+            $arrangedWeatherData = collect($citiesWeather)->map(function ($cityWeather) {
+                //if user sends wrong city name in the cities array, weather API does not return an error
                 //In this case the API weather not handle it, we must handle manually (1006 refers to no matching city name)
-            if (!isset($citytWeather['query']['location'])) {
-                $notFoundError = 1006;
-               throw $this->handleAPIError($notFoundError);
+                if (!isset($cityWeather['query']['location'])) {
+                    $notFoundError = 1006;
+                    throw $this->handleAPIError($notFoundError);
+                }
+
+                $locationData = $cityWeather['query']['location'];
+                $cityName = strtolower($locationData['name']);
+                $currentData = $cityWeather['query']['current'];
+
+                $timeToLiveIn30Min = $this->getTimeToLiveIn30Min();
+
+                $cityWeather = [
+                    'location' => $locationData,
+                    'current' => $currentData,
+                ];
+
+                $cityWeather = (object) $cityWeather;
+                Cache::put($cityName, $cityWeather, $timeToLiveIn30Min);
+                return  $cityWeather;
+            });
+
+            return $arrangedWeatherData->toArray();
+        } catch (Exception $exception) {
+            throw $exception;
+        }
+    }
+
+    private function arrangedAndCachedStatisticsWeatherData($citiesWeather, $citiesCount)
+    {
+        try {
+            $highestTemp = [];
+            $lowestTemp = [];
+            $tempSum = 0;
+
+            $highestHumidity = [];
+            $lowestHumidity = [];
+            $humiditySum = 0;
+
+            $speediestWind = [];
+            $slowestWind = [];
+            $speedWindSum = 0;
+
+            $mostCoveredByCloud = [];
+            $lessCoveredByCloud = [];
+            $cloudCoverSum = 0;
+
+            foreach ($citiesWeather as $cityWeather) {
+                $cityName = strtolower($cityWeather->location['name']);
+
+                // temp
+                $highestTemp = $this->comparison($cityWeather->current['temp_c'], $cityName, $highestTemp, 'more');
+                $lowestTemp = $this->comparison($cityWeather->current['temp_c'], $cityName, $lowestTemp, 'less');
+
+                // humidity
+                $highestHumidity = $this->comparison($cityWeather->current['humidity'], $cityName, $highestHumidity, 'more');
+                $lowestHumidity = $this->comparison($cityWeather->current['humidity'], $cityName, $lowestHumidity, 'less');
+
+                // wind
+                $speediestWind = $this->comparison($cityWeather->current['wind_kph'], $cityName, $speediestWind, 'more');
+                $slowestWind = $this->comparison($cityWeather->current['wind_kph'], $cityName, $slowestWind, 'less');
+
+                // Cloud
+                $mostCoveredByCloud = $this->comparison($cityWeather->current['cloud'], $cityName, $mostCoveredByCloud, 'more');
+                $lessCoveredByCloud = $this->comparison($cityWeather->current['cloud'], $cityName, $lessCoveredByCloud, 'less');
+
+                $tempSum += $cityWeather->current['temp_c'];
+                $humiditySum += $cityWeather->current['humidity'];
+                $speedWindSum += $cityWeather->current['wind_kph'];
+                $cloudCoverSum += $cityWeather->current['cloud'];
             }
 
-            $locationData = $citytWeather['query']['location'];
-            $cityName = strtolower($locationData['name']);
-            $currentData = $citytWeather['query']['current'];
+            $averageTemp = $tempSum / $citiesCount;
+            $averageHumidity =  $humiditySum / $citiesCount;
+            $averageSpeedWind = $speedWindSum / $citiesCount;
+            $averageCloudCover = $cloudCoverSum / $citiesCount;
 
-            $timeToLiveIn30Min = $this->getTimeToLiveIn30Min();
+            $statisticsWeatherArray = [
+                'temperature' => [
+                    'avrage' => number_format($averageTemp, 2, '.', ','),
+                    'highest' => $highestTemp,
+                    'lowest' => $lowestTemp
+                ],
 
-            $cityWeather = [
-                'location' => $locationData,
-                'current' => $currentData,
+                'humidity' => [
+                    'avrage' => number_format($averageHumidity, 2, '.', ','),
+                    'highest' => $highestHumidity,
+                    'lowest' => $lowestHumidity
+                ],
+
+                'wind' => [
+                    'avrage' => number_format($averageSpeedWind, 2, '.', ','),
+                    'highest' => $speediestWind,
+                    'lowest' => $slowestWind
+                ],
+
+                'cloud' => [
+                    'avrage' => number_format($averageCloudCover, 2, '.', ','),
+                    'highest' => $mostCoveredByCloud,
+                    'lowest' => $lessCoveredByCloud
+                ],
             ];
 
-            $cityWeather = (object) $cityWeather;
-            Cache::put($cityName, $cityWeather, $timeToLiveIn30Min);
-            return  $cityWeather;
-        });
-
-        return $arrangedWeatherData->toArray();
-    } catch (Exception $exception) {
-        throw $exception;
+            return $statisticsWeatherArray;
+        } catch (Exception $exception) {
+            throw $exception;
+        }
     }
+
+    private function comparison($cityWeather, $cityName, $statisticsWeatherData, $comparisonType)
+    {
+        if (isset($statisticsWeatherData['num'])) {
+            if ($cityWeather == $statisticsWeatherData['num']) {
+                $statisticsWeatherData['city'] = $statisticsWeatherData['city'] . ', ' . $cityName;
+                return $statisticsWeatherData;
+            }
+
+            if ($comparisonType == 'more') {
+                if ($cityWeather  > $statisticsWeatherData['num']) {
+                    $statisticsWeatherData['city'] = $cityName;
+                    $statisticsWeatherData['num'] = $cityWeather;
+                }
+            } else {
+                if ($cityWeather < $statisticsWeatherData['num']) {
+                    $statisticsWeatherData['city'] = $cityName;
+                    $statisticsWeatherData['num'] = $cityWeather;
+                }
+            }
+        } else {
+            $statisticsWeatherData['city'] = $cityName;
+            $statisticsWeatherData['num'] = $cityWeather;
+        }
+
+        return $statisticsWeatherData;
     }
 
     // scalability purpose: function named with number of minutes, if in the future I want to create another function with a different Time to live

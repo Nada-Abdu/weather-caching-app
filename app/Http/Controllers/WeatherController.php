@@ -39,7 +39,7 @@ class WeatherController extends Controller
     public function citiesWeather(CitiesWeatherRequest $request)
     {
         try {
-            //simplicity purpose: GetCityWeatherRequest class deals with validation errors and will return an appropriate message to the user
+            //simplicity purpose: CitiesWeatherRequest class deals with validation errors and will return an appropriate message to the user
             $request->validated();
 
             // simplicity and maintainability purposes: Create WeatherServices class to holde the logic and make the controller as simple as possible.
@@ -50,8 +50,16 @@ class WeatherController extends Controller
             return response()->json($exception->getMessage(), $exception->getCode());
         }
     }
-    
-    public function getStatisticsWeather()
+
+    public function statisticsWeather()
     {
+        try {
+            // simplicity and maintainability purposes: Create WeatherServices class to holde the logic and make the controller as simple as possible.
+            $statisticsWeather = $this->weatherService->getStatisticsWeather();
+
+            return response()->json($statisticsWeather, 200);
+        } catch (Exception $exception) {
+            return response()->json($exception->getMessage(), $exception->getCode());
+        }
     }
 }

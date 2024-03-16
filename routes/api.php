@@ -15,5 +15,7 @@ use App\Http\Controllers\WeatherController;
 |
 */
 
+Route::get('/weather/statistics', [WeatherController::class, 'statisticsWeather']);
 Route::get('/weather/{city}', [WeatherController::class, 'cityWeather']);
 Route::post('/weather/bulk', [WeatherController::class, 'citiesWeather']);
+

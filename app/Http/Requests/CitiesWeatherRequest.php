@@ -29,9 +29,9 @@ class CitiesWeatherRequest extends FormRequest
     public function messages()
     {
         return [
-            'cities.required' => 'City name is required !',
-            'cities.string' => 'City name must be string !',
-            'cities.max' => 'Maximum length of city name is 100 characters',
+            'cities.*.required' => 'City name is required !',
+            'cities.*.string' => 'City name must be string !',
+            'cities.*.max' => 'Maximum length of city name is 100 characters',
         ];
     }
 }
