@@ -11,6 +11,12 @@ use Exception;
 class WeatherServices implements WeatherInterface
 {
 
+    private $key;
+    public function __construct()
+    {
+        // API key added in .env file to make it secure
+        $this->key =  config('services.weatherAPI.key');
+    }
 
     public function getCityWeather($city)
     {
@@ -20,10 +26,7 @@ class WeatherServices implements WeatherInterface
 
         // if the weather data is not in the cache, we will get it from the API
         if (!$cityWeather) {
-
-            // API key added in .env file to make it secure
-            $key = config('services.weatherAPI.key');
-            $response = Http::get('http://api.weatherapi.com/v1/current.json?key=' . $key . '&q=' . $city);
+            $response = Http::get('http://api.weatherapi.com/v1/current.json?key=' . $this->key . '&q=' . $city);
 
             if (!$response->successful()) {
                 // error handling
@@ -68,10 +71,9 @@ class WeatherServices implements WeatherInterface
                 "locations" => $citiestWeatherForRequest
             ];
 
-            $key = config('services.weatherAPI.key');
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json'
-            ])->post('http://api.weatherapi.com/v1/current.json?key=' . $key . '&q=bulk', $citiestWeatherForRequest);
+            ])->post('http://api.weatherapi.com/v1/current.json?key=' . $this->key . '&q=bulk', $citiestWeatherForRequest);
 
 
             // error handling
@@ -121,6 +123,22 @@ class WeatherServices implements WeatherInterface
                 $errorMessage = 'API key not provided';
                 $code = 401;
                 break;
+            case 2006:
+                $errorMessage = 'API key provided is invalid';
+                $code = 401;
+                break;
+            case 2007:
+                $errorMessage = 'API key has exceeded calls per month.';
+                $code = 403;
+                break;
+            case 2008:
+                $errorMessage = 'API key has been disabled.';
+                $code = 403;
+                break;
+            case 2009:
+                $errorMessage = 'API key does not have access to the resource. Please check pricing page for what is allowed in your API subscription plan.';
+                $code = 403;
+                break;
             case 1003:
                 $errorMessage = 'Parameter city not provided.';
                 $code = 400;
@@ -132,22 +150,6 @@ class WeatherServices implements WeatherInterface
             case 1006:
                 $errorMessage = 'No weather found matching the city';
                 $code = 400;
-                break;
-            case 2006:
-                $errorMessage = 'API key provided is invalid';
-                $code = 401;
-                break;
-            case 2007:
-                $errorMessage = 'API key has exceeded calls per month quota.';
-                $code = 403;
-                break;
-            case 2008:
-                $errorMessage = 'API key has been disabled.';
-                $code = 403;
-                break;
-            case 2009:
-                $errorMessage = 'API key does not have access to the resource. Please check pricing page for what is allowed in your API subscription plan.';
-                $code = 403;
                 break;
             case 9000:
                 $errorMessage = 'Json body passed in bulk request is invalid. Please make sure it is valid json with utf-8 encoding.';
@@ -162,6 +164,7 @@ class WeatherServices implements WeatherInterface
                 $code = 400;
                 break;
             default:
+                $code = 500;
                 $errorMessage = 'An error occurred while processing your request.';
                 break;
         }
@@ -169,7 +172,7 @@ class WeatherServices implements WeatherInterface
         return new Exception($errorMessage, $code);
     }
 
-    private function arrangedandCacheBulkData($citiesWeather)
+    public function arrangedandCacheBulkData($citiesWeather)
     {
         try {
             $citiesWeather = $citiesWeather['bulk'];
@@ -203,7 +206,7 @@ class WeatherServices implements WeatherInterface
         }
     }
 
-    private function arrangedAndCachedStatisticsWeatherData($citiesWeather, $citiesCount)
+    public function arrangedAndCachedStatisticsWeatherData($citiesWeather, $citiesCount)
     {
         try {
             $highestTemp = [];
@@ -284,7 +287,7 @@ class WeatherServices implements WeatherInterface
         }
     }
 
-    private function comparison($cityWeather, $cityName, $statisticsWeatherData, $comparisonType)
+    public function comparison($cityWeather, $cityName, $statisticsWeatherData, $comparisonType)
     {
         if (isset($statisticsWeatherData['num'])) {
             if ($cityWeather == $statisticsWeatherData['num']) {
@@ -313,7 +316,7 @@ class WeatherServices implements WeatherInterface
 
     // scalability purpose: function named with number of minutes, if in the future I want to create another function with a different Time to live
     // readability purpose: function named with number of minutes.
-    private function getTimeToLiveIn30Min()
+    public function getTimeToLiveIn30Min()
     {
         //scalability purpose: create TimeToLiveInMinutesEnums enum class, if in the future I want to add a new time to live.
         // readability purpose: Enums are named with a number of minutes.
