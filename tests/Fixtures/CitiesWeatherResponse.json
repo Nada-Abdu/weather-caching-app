@@ -1,0 +1,139 @@
+{
+    "bulk": [
+        {
+            "query": {
+                "custom_id": "my-id-1",
+                "q": "53,-0.12",
+                "location": {
+                    "name": "Jeddah",
+                    "region": "Makkah",
+                    "country": "Saudi Arabia",
+                    "lat": 21.52,
+                    "lon": 39.22,
+                    "tz_id": "Asia/Riyadh",
+                    "localtime_epoch": 1710730491,
+                    "localtime": "2024-03-18 5:54"
+                },
+                "current": {
+                    "last_updated_epoch": 1710729900,
+                    "last_updated": "2024-03-18 05:45",
+                    "temp_c": 30,
+                    "temp_f": 86,
+                    "is_day": 0,
+                    "condition": {
+                        "text": "Partly cloudy",
+                        "icon": "//cdn.weatherapi.com/weather/64x64/night/116.png",
+                        "code": 1003
+                    },
+                    "wind_mph": 23,
+                    "wind_kph": 37.1,
+                    "wind_degree": 80,
+                    "wind_dir": "E",
+                    "pressure_mb": 1009,
+                    "pressure_in": 29.8,
+                    "precip_mm": 0,
+                    "precip_in": 0,
+                    "humidity": 33,
+                    "cloud": 75,
+                    "feelslike_c": 33.2,
+                    "feelslike_f": 91.8,
+                    "vis_km": 8,
+                    "vis_miles": 4,
+                    "uv": 1,
+                    "gust_mph": 27.5,
+                    "gust_kph": 44.3
+                }
+            }
+        },
+        {
+            "query": {
+                "custom_id": "any-internal-id",
+                "q": "London",
+                "location": {
+                    "name": "Makkah",
+                    "region": "Makkah",
+                    "country": "Saudi Arabia",
+                    "lat": 21.43,
+                    "lon": 39.83,
+                    "tz_id": "Asia/Riyadh",
+                    "localtime_epoch": 1710730491,
+                    "localtime": "2024-03-18 5:54"
+                },
+                "current": {
+                    "last_updated_epoch": 1710729900,
+                    "last_updated": "2024-03-18 05:45",
+                    "temp_c": 30,
+                    "temp_f": 86,
+                    "is_day": 0,
+                    "condition": {
+                        "text": "Partly cloudy",
+                        "icon": "//cdn.weatherapi.com/weather/64x64/night/116.png",
+                        "code": 1003
+                    },
+                    "wind_mph": 23,
+                    "wind_kph": 37.1,
+                    "wind_degree": 80,
+                    "wind_dir": "E",
+                    "pressure_mb": 1009,
+                    "pressure_in": 29.8,
+                    "precip_mm": 0,
+                    "precip_in": 0,
+                    "humidity": 33,
+                    "cloud": 75,
+                    "feelslike_c": 29.8,
+                    "feelslike_f": 85.6,
+                    "vis_km": 8,
+                    "vis_miles": 4,
+                    "uv": 1,
+                    "gust_mph": 27.5,
+                    "gust_kph": 44.3
+                }
+            }
+        },
+        {
+            "query": {
+                "custom_id": "us-zipcode-id-765",
+                "q": "90201",
+                "location": {
+                    "name": "Riyadh",
+                    "region": "Ar Riyad",
+                    "country": "Saudi Arabia",
+                    "lat": 24.64,
+                    "lon": 46.77,
+                    "tz_id": "Asia/Riyadh",
+                    "localtime_epoch": 1710730491,
+                    "localtime": "2024-03-18 5:54"
+                },
+                "current": {
+                    "last_updated_epoch": 1710729900,
+                    "last_updated": "2024-03-18 05:45",
+                    "temp_c": 22,
+                    "temp_f": 71.6,
+                    "is_day": 0,
+                    "condition": {
+                        "text": "Moderate rain",
+                        "icon": "//cdn.weatherapi.com/weather/64x64/night/302.png",
+                        "code": 1189
+                    },
+                    "wind_mph": 5.6,
+                    "wind_kph": 9,
+                    "wind_degree": 150,
+                    "wind_dir": "SSE",
+                    "pressure_mb": 1017,
+                    "pressure_in": 30.03,
+                    "precip_mm": 0,
+                    "precip_in": 0,
+                    "humidity": 65,
+                    "cloud": 75,
+                    "feelslike_c": 24.4,
+                    "feelslike_f": 75.8,
+                    "vis_km": 9,
+                    "vis_miles": 5,
+                    "uv": 1,
+                    "gust_mph": 10.8,
+                    "gust_kph": 17.4
+                }
+            }
+        }
+    ]
+}

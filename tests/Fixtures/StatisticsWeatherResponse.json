@@ -1,0 +1,46 @@
+{
+    "temperature": {
+        "avrage": "10.25",
+        "highest": {
+            "city": "jeddah, makkah",
+            "num": 30
+        },
+        "lowest": {
+            "city": "riyadh",
+            "num": 22
+        }
+    },
+    "humidity": {
+        "avrage": "16.38",
+        "highest": {
+            "city": "riyadh",
+            "num": 65
+        },
+        "lowest": {
+            "city": "jeddah, makkah",
+            "num": 33
+        }
+    },
+    "wind": {
+        "avrage": "10.40",
+        "highest": {
+            "city": "jeddah, makkah",
+            "num": 37.1
+        },
+        "lowest": {
+            "city": "riyadh",
+            "num": 9
+        }
+    },
+    "cloud": {
+        "avrage": "28.13",
+        "highest": {
+            "city": "jeddah, makkah, riyadh",
+            "num": 75
+        },
+        "lowest": {
+            "city": "jeddah, makkah, riyadh",
+            "num": 75
+        }
+    }
+}

@@ -1,0 +1,41 @@
+{
+    "location": {
+        "name": "Jeddah",
+        "region": "Makkah",
+        "country": "Saudi Arabia",
+        "lat": 21.52,
+        "lon": 39.22,
+        "tz_id": "Asia/Riyadh",
+        "localtime_epoch": 1710644973,
+        "localtime": "2024-03-17 6:09"
+    },
+    "current": {
+        "last_updated_epoch": 1710644400,
+        "last_updated": "2024-03-17 06:00",
+        "temp_c": 27.1,
+        "temp_f": 80.9,
+        "is_day": 0,
+        "condition": {
+            "text": "Partly Cloudy ",
+            "icon": "//cdn.weatherapi.com/weather/64x64/night/116.png",
+            "code": 1003
+        },
+        "wind_mph": 2.5,
+        "wind_kph": 4,
+        "wind_degree": 296,
+        "wind_dir": "WNW",
+        "pressure_mb": 1010,
+        "pressure_in": 29.84,
+        "precip_mm": 0,
+        "precip_in": 0,
+        "humidity": 60,
+        "cloud": 47,
+        "feelslike_c": 28.5,
+        "feelslike_f": 83.4,
+        "vis_km": 10,
+        "vis_miles": 6,
+        "uv": 1,
+        "gust_mph": 3.6,
+        "gust_kph": 5.8
+    }
+}
